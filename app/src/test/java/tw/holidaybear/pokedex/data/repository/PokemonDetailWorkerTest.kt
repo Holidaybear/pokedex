@@ -40,7 +40,7 @@ class PokemonDetailWorkerTest {
         // Arrange
         val pokemonId = 813
         val imageUrl = "https://example.com/scorbunny.png"
-        val description = "A warm-up of running around gets fire energy coursing through this Pokémon’s body. Once that happens, it’s ready to fight at full power."
+        val description = "A cute rabbit."
         val detailResponse = PokemonDetailResponse(
             id = pokemonId,
             name = "scorbunny",

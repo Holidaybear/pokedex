@@ -2,6 +2,7 @@ package tw.holidaybear.pokedex.data.local
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import tw.holidaybear.pokedex.data.model.TypeWithCount
@@ -24,7 +25,7 @@ interface PokemonDao {
             "WHERE pt.typeId = :typeId AND p.isProcessed = 1")
     fun getPokemonByType(typeId: Int): Flow<List<Pokemon>>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPokemon(pokemon: Pokemon)
 
     @Insert
@@ -35,4 +36,10 @@ interface PokemonDao {
 
     @Query("UPDATE pokemon SET isProcessed = 1, imageUrl = :imageUrl, description = :description WHERE id = :pokemonId")
     suspend fun updatePokemonDetails(pokemonId: Int, imageUrl: String, description: String?)
+
+    @Query("SELECT COUNT(*) FROM pokemon WHERE isProcessed = 1")
+    suspend fun getProcessedPokemonCount(): Int
+
+    @Query("SELECT id FROM pokemon WHERE isProcessed = 0")
+    suspend fun getUnprocessedPokemonIds(): List<Int>
 }

@@ -27,13 +27,34 @@ class PokemonRepository @AssistedInject constructor(
 ) {
 
     suspend fun fetchAndStorePokemonList() {
+        // Check if database already has processed Pokemon
+        val processedCount = pokemonDao.getProcessedPokemonCount()
+        if (processedCount >= 151) {
+            // All Pokemon are processed, skip API fetch
+            return
+        }
+
+        // Fetch unprocessed Pokemon IDs
+        val unprocessedIds = pokemonDao.getUnprocessedPokemonIds()
+        if (unprocessedIds.isNotEmpty()) {
+            // Enqueue Worker tasks for unprocessed Pokemon
+            unprocessedIds.forEach { pokemonId ->
+                val workRequest = OneTimeWorkRequestBuilder<PokemonDetailWorker>()
+                    .setInputData(workDataOf("POKEMON_ID" to pokemonId))
+                    .build()
+                workManager.enqueue(workRequest)
+            }
+            return
+        }
+
+        // First launch: fetch from API and store in Room
         val response = pokeApiService.getPokemonList(limit = 151)
         val pokemonList = response.results.map { item ->
             Pokemon(
                 id = item.id,
                 name = item.name,
-                imageUrl = "", // Will be updated by Worker
-                description = null, // Will be updated by Worker
+                imageUrl = "",
+                description = null,
                 isProcessed = false
             )
         }

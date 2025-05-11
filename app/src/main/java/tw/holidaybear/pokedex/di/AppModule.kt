@@ -16,7 +16,6 @@ import tw.holidaybear.pokedex.data.local.AppDatabase
 import tw.holidaybear.pokedex.data.local.CaptureRecordDao
 import tw.holidaybear.pokedex.data.local.PokemonDao
 import tw.holidaybear.pokedex.data.remote.PokeApiService
-import tw.holidaybear.pokedex.data.repository.PokemonRepository
 import javax.inject.Singleton
 
 @Module
@@ -58,14 +57,4 @@ object AppModule {
     @Provides
     @Singleton
     fun provideWorkManager(@ApplicationContext context: Context): WorkManager = WorkManager.getInstance(context)
-
-    @Provides
-    @Singleton
-    fun providePokemonRepository(
-        pokeApiService: PokeApiService,
-        pokemonDao: PokemonDao,
-        captureRecordDao: CaptureRecordDao,
-        workManager: WorkManager
-    ): PokemonRepository =
-        PokemonRepository(pokeApiService, pokemonDao, captureRecordDao, workManager)
 }
