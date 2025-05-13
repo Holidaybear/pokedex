@@ -1,29 +1,24 @@
 package tw.holidaybear.pokedex.data.repository
 
-import androidx.hilt.work.HiltWorker
-import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
+import javax.inject.Inject
 import tw.holidaybear.pokedex.data.local.CaptureRecord
 import tw.holidaybear.pokedex.data.local.CaptureRecordDao
 import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.local.PokemonDao
-import tw.holidaybear.pokedex.data.local.PokemonType
-import tw.holidaybear.pokedex.data.local.Type
 import tw.holidaybear.pokedex.data.model.CapturedPokemon
 import tw.holidaybear.pokedex.data.model.TypeWithCount
 import tw.holidaybear.pokedex.data.remote.PokeApiService
 import kotlinx.coroutines.flow.Flow
+import tw.holidaybear.pokedex.util.PokemonDetailWorker
 
-class PokemonRepository @AssistedInject constructor(
+class PokemonRepository @Inject constructor(
     private val pokeApiService: PokeApiService,
     private val pokemonDao: PokemonDao,
     private val captureRecordDao: CaptureRecordDao,
-    @Assisted private val workManager: WorkManager
+    private val workManager: WorkManager
 ) {
 
     suspend fun fetchAndStorePokemonList() {
@@ -52,7 +47,7 @@ class PokemonRepository @AssistedInject constructor(
         val pokemonList = response.results.map { item ->
             Pokemon(
                 id = item.id,
-                name = item.name,
+                name = item.name.replaceFirstChar { it.uppercase() },
                 imageUrl = "",
                 description = null,
                 isProcessed = false
@@ -93,42 +88,5 @@ class PokemonRepository @AssistedInject constructor(
 
     suspend fun releasePokemon(captureId: Long) {
         captureRecordDao.deleteCapture(captureId)
-    }
-}
-
-@HiltWorker
-class PokemonDetailWorker @AssistedInject constructor(
-    @Assisted context: android.content.Context,
-    @Assisted params: WorkerParameters,
-    private val pokeApiService: PokeApiService,
-    private val pokemonDao: PokemonDao
-) : CoroutineWorker(context, params) {
-
-    override suspend fun doWork(): Result {
-        val pokemonId = inputData.getInt("POKEMON_ID", -1)
-        if (pokemonId == -1) return Result.failure()
-
-        return try {
-            val detailResponse = pokeApiService.getPokemonDetail(pokemonId)
-            val imageUrl = detailResponse.sprites.other.officialArtwork.frontDefault
-
-            val speciesResponse = pokeApiService.getPokemonSpecies(pokemonId)
-            val description = speciesResponse.flavorTextEntries
-                .firstOrNull { it.isEnglish() }
-                ?.flavorText
-                ?.replace("\n", " ") ?: ""
-
-            detailResponse.types.forEachIndexed { index, pokemonType ->
-                val typeName = pokemonType.type.name
-                val typeId = pokemonId * 100 + index // Simple ID generation for demo
-                pokemonDao.insertType(Type(id = typeId, name = typeName))
-                pokemonDao.insertPokemonType(PokemonType(pokemonId = pokemonId, typeId = typeId))
-            }
-
-            pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description)
-            Result.success()
-        } catch (e: Exception) {
-            Result.retry()
-        }
     }
 }

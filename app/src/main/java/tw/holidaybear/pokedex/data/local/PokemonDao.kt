@@ -28,7 +28,7 @@ interface PokemonDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPokemon(pokemon: Pokemon)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertType(type: Type)
 
     @Insert
@@ -42,4 +42,7 @@ interface PokemonDao {
 
     @Query("SELECT id FROM pokemon WHERE isProcessed = 0")
     suspend fun getUnprocessedPokemonIds(): List<Int>
+
+    @Query("SELECT * FROM type WHERE name = :name LIMIT 1")
+    suspend fun getTypeByName(name: String): Type?
 }

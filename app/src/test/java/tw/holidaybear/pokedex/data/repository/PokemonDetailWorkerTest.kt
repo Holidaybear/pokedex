@@ -20,6 +20,7 @@ import tw.holidaybear.pokedex.data.remote.PokemonSpeciesResponse
 import tw.holidaybear.pokedex.data.remote.PokemonType
 import tw.holidaybear.pokedex.data.remote.Sprites
 import tw.holidaybear.pokedex.data.remote.TypeDetail
+import tw.holidaybear.pokedex.util.PokemonDetailWorker
 
 class PokemonDetailWorkerTest {
 
