@@ -22,7 +22,8 @@ interface PokemonDao {
     @Query("SELECT p.* " +
             "FROM pokemon p " +
             "INNER JOIN pokemon_type pt ON p.id = pt.pokemonId " +
-            "WHERE pt.typeId = :typeId AND p.isProcessed = 1")
+            "WHERE pt.typeId = :typeId AND p.isProcessed = 1 " +
+            "ORDER BY p.id ASC")
     fun getPokemonByType(typeId: Int): Flow<List<Pokemon>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -34,8 +35,8 @@ interface PokemonDao {
     @Insert
     suspend fun insertPokemonType(pokemonType: PokemonType)
 
-    @Query("UPDATE pokemon SET isProcessed = 1, imageUrl = :imageUrl, description = :description WHERE id = :pokemonId")
-    suspend fun updatePokemonDetails(pokemonId: Int, imageUrl: String, description: String?)
+    @Query("UPDATE pokemon SET isProcessed = 1, imageUrl = :imageUrl, description = :description, evolvesFromId = :evolvesFromId WHERE id = :pokemonId")
+    suspend fun updatePokemonDetails(pokemonId: Int, imageUrl: String, description: String?, evolvesFromId: Int?)
 
     @Query("SELECT COUNT(*) FROM pokemon WHERE isProcessed = 1")
     suspend fun getProcessedPokemonCount(): Int
@@ -45,4 +46,7 @@ interface PokemonDao {
 
     @Query("SELECT * FROM type WHERE name = :name LIMIT 1")
     suspend fun getTypeByName(name: String): Type?
+
+    @Query("SELECT * FROM pokemon WHERE id = :pokemonId")
+    suspend fun getPokemonById(pokemonId: Int): Pokemon?
 }

@@ -24,43 +24,30 @@ class PokemonRepository @Inject constructor(
     suspend fun fetchAndStorePokemonList() {
         // Check if database already has processed Pokemon
         val processedCount = pokemonDao.getProcessedPokemonCount()
-        if (processedCount >= 151) {
-            // All Pokemon are processed, skip API fetch
-            return
-        }
-
-        // Fetch unprocessed Pokemon IDs
-        val unprocessedIds = pokemonDao.getUnprocessedPokemonIds()
-        if (unprocessedIds.isNotEmpty()) {
+        if (processedCount < 151) {
+            val unprocessedPokemonIds = pokemonDao.getUnprocessedPokemonIds()
+            if (unprocessedPokemonIds.isEmpty()) {
+                val response = pokeApiService.getPokemonList(151)
+                response.results.forEach { item ->
+                    pokemonDao.insertPokemon(
+                        Pokemon(
+                            id = item.id,
+                            name = item.name,
+                            imageUrl = "",
+                            description = null,
+                            evolvesFromId = null,
+                            isProcessed = false
+                        )
+                    )
+                }
+            }
             // Enqueue Worker tasks for unprocessed Pokemon
-            unprocessedIds.forEach { pokemonId ->
+            pokemonDao.getUnprocessedPokemonIds().forEach { pokemonId ->
                 val workRequest = OneTimeWorkRequestBuilder<PokemonDetailWorker>()
                     .setInputData(workDataOf("POKEMON_ID" to pokemonId))
                     .build()
                 workManager.enqueue(workRequest)
             }
-            return
-        }
-
-        // First launch: fetch from API and store in Room
-        val response = pokeApiService.getPokemonList(limit = 151)
-        val pokemonList = response.results.map { item ->
-            Pokemon(
-                id = item.id,
-                name = item.name.replaceFirstChar { it.uppercase() },
-                imageUrl = "",
-                description = null,
-                isProcessed = false
-            )
-        }
-        pokemonList.forEach { pokemonDao.insertPokemon(it) }
-
-        // Enqueue WorkManager tasks for processing each Pokemon
-        pokemonList.forEach { pokemon ->
-            val workRequest = OneTimeWorkRequestBuilder<PokemonDetailWorker>()
-                .setInputData(workDataOf("POKEMON_ID" to pokemon.id))
-                .build()
-            workManager.enqueue(workRequest)
         }
     }
 
@@ -88,5 +75,9 @@ class PokemonRepository @Inject constructor(
 
     suspend fun releasePokemon(captureId: Long) {
         captureRecordDao.deleteCapture(captureId)
+    }
+
+    suspend fun getPokemonDetails(pokemonId: Int): Pokemon? {
+        return pokemonDao.getPokemonById(pokemonId)
     }
 }

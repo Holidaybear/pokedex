@@ -33,8 +33,11 @@ class PokemonDetailWorker @AssistedInject constructor(
                 ?.flavorText
                 ?.replace("\n", " ") ?: ""
 
+            val evolvesFromId = speciesResponse.evolvesFromSpecies?.url
+                ?.let { url -> url.split("/").lastOrNull { it.isNotBlank() }?.toIntOrNull() }
+
             detailResponse.types.forEach { pokemonType ->
-                val typeName = pokemonType.type.name.replaceFirstChar { it.uppercase() }
+                val typeName = pokemonType.type.name
                 val existingType = pokemonDao.getTypeByName(typeName)
                 val typeId = if (existingType != null) {
                     existingType.id
@@ -46,7 +49,7 @@ class PokemonDetailWorker @AssistedInject constructor(
                 pokemonDao.insertPokemonType(PokemonType(pokemonId = pokemonId, typeId = typeId))
             }
 
-            pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description)
+            pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, evolvesFromId)
             Result.success()
         } catch (e: Exception) {
             Result.retry()

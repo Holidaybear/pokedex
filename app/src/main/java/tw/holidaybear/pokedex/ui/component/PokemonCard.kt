@@ -45,7 +45,7 @@ fun PokemonCard(
             )
         }
         Text(
-            text = pokemon.name,
+            text = pokemon.name.replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp)

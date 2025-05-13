@@ -76,6 +76,6 @@ data class Language(
 )
 
 data class EvolvesFromSpecies(
-    @SerializedName("name")
-    val name: String // e.g., "scorbunny" for raboot
+    @SerializedName("url")
+    val url: String
 )

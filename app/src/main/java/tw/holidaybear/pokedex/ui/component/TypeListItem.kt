@@ -33,7 +33,7 @@ fun TypeListItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = type.name,
+                text = type.name.replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier

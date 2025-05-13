@@ -45,7 +45,7 @@ fun CapturedPokemonCard(
             )
         }
         Text(
-            text = capturedPokemon.pokemon.name,
+            text = capturedPokemon.pokemon.name.replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp)

@@ -45,7 +45,7 @@ class PokemonRepositoryTest {
             )
         )
         coEvery { pokemonDao.getProcessedPokemonCount() } returns 0
-        coEvery { pokemonDao.getUnprocessedPokemonIds() } returns emptyList()
+        coEvery { pokemonDao.getUnprocessedPokemonIds() } returns emptyList() andThen listOf(813)
         coEvery { pokeApiService.getPokemonList(151) } returns pokemonListResponse
         coEvery { pokemonDao.insertPokemon(any()) } returns Unit
 
@@ -53,7 +53,7 @@ class PokemonRepositoryTest {
         repository.fetchAndStorePokemonList()
 
         // Assert
-        coVerify { pokemonDao.insertPokemon(Pokemon(id = 813, name = "scorbunny", imageUrl = "", description = null, isProcessed = false)) }
+        coVerify { pokemonDao.insertPokemon(Pokemon(id = 813, name = "scorbunny", imageUrl = "", description = null, evolvesFromId = null, isProcessed = false)) }
         verify { workManager.enqueue(any<OneTimeWorkRequest>()) }
     }
 
@@ -89,7 +89,7 @@ class PokemonRepositoryTest {
     @Test
     fun `getTypesWithCount should return types with count from DAO`() = runTest {
         // Arrange
-        val type = Type(id = 1, name = "Fire")
+        val type = Type(id = 1, name = "fire")
         val typeWithCount = TypeWithCount(type = type, count = 3)
         every { pokemonDao.getTypesWithCount() } returns flowOf(listOf(typeWithCount))
 
@@ -99,7 +99,7 @@ class PokemonRepositoryTest {
         // Assert
         result.collect { types ->
             assert(types.size == 1)
-            assert(types[0].type.name == "Fire")
+            assert(types[0].type.name == "fire")
             assert(types[0].count == 3)
         }
     }
@@ -108,7 +108,7 @@ class PokemonRepositoryTest {
     fun `getPokemonByType should return Pokemon for given type from DAO`() = runTest {
         // Arrange
         val typeId = 1
-        val pokemon = Pokemon(id = 1, name = "Scorbunny", imageUrl = "url", description = "A cute rabbit.", isProcessed = true)
+        val pokemon = Pokemon(id = 1, name = "scorbunny", imageUrl = "url", description = "A cute rabbit.", evolvesFromId = null, isProcessed = true)
         every { pokemonDao.getPokemonByType(typeId) } returns flowOf(listOf(pokemon))
 
         // Act
@@ -117,7 +117,7 @@ class PokemonRepositoryTest {
         // Assert
         result.collect { pokemonList ->
             assert(pokemonList.size == 1)
-            assert(pokemonList[0].name == "Scorbunny")
+            assert(pokemonList[0].name == "scorbunny")
         }
     }
 
@@ -125,7 +125,7 @@ class PokemonRepositoryTest {
     fun `capturePokemon should insert capture record into DAO`() = runTest {
         // Arrange
         val pokemonId = 1
-        val categoryType = "Fire"
+        val categoryType = "fire"
         coEvery { captureRecordDao.insertCapture(any()) } returns Unit
 
         // Act
@@ -151,8 +151,8 @@ class PokemonRepositoryTest {
     @Test
     fun `getCapturedPokemon should return captured Pokemon from DAO`() = runTest {
         // Arrange
-        val pokemon = Pokemon(id = 1, name = "Scorbunny", imageUrl = "url", description = "A cute rabbit.", isProcessed = true)
-        val capturedPokemon = CapturedPokemon(pokemon, captureId = 1L, captureTimestamp = 1234567890L, categoryType = "Fire")
+        val pokemon = Pokemon(id = 1, name = "scorbunny", imageUrl = "url", description = "A cute rabbit.", evolvesFromId = null, isProcessed = true)
+        val capturedPokemon = CapturedPokemon(pokemon, captureId = 1L, captureTimestamp = 1234567890L, categoryType = "fire")
         every { captureRecordDao.getCapturedPokemon() } returns flowOf(listOf(capturedPokemon))
 
         // Act
@@ -161,8 +161,24 @@ class PokemonRepositoryTest {
         // Assert
         result.collect { capturedList ->
             assert(capturedList.size == 1)
-            assert(capturedList[0].pokemon.name == "Scorbunny")
-            assert(capturedList[0].categoryType == "Fire")
+            assert(capturedList[0].pokemon.name == "scorbunny")
+            assert(capturedList[0].categoryType == "fire")
         }
+    }
+
+    @Test
+    fun `getPokemonDetails should return Pokemon details including evolvesFromId`() = runTest {
+        // Arrange
+        val pokemonId = 1
+        val pokemon = Pokemon(id = 1, name = "scorbunny", imageUrl = "url", description = "A cute rabbit.", evolvesFromId = 16, isProcessed = true)
+        coEvery { pokemonDao.getPokemonById(pokemonId) } returns pokemon
+
+        // Act
+        val result = repository.getPokemonDetails(pokemonId)
+
+        // Assert
+        assert(result != null)
+        assert(result?.name == "scorbunny")
+        assert(result?.evolvesFromId == 16)
     }
 }

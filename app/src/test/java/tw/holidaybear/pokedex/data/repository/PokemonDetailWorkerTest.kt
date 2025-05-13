@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import tw.holidaybear.pokedex.data.local.PokemonDao
+import tw.holidaybear.pokedex.data.remote.EvolvesFromSpecies
 import tw.holidaybear.pokedex.data.remote.PokeApiService
 import tw.holidaybear.pokedex.data.remote.FlavorTextEntry
 import tw.holidaybear.pokedex.data.remote.Language
@@ -32,21 +33,59 @@ class PokemonDetailWorkerTest {
 
     @Before
     fun setup() {
-        coEvery { workerParameters.inputData } returns workDataOf("POKEMON_ID" to 1)
         worker = PokemonDetailWorker(context, workerParameters, pokeApiService, pokemonDao)
     }
 
     @Test
-    fun `doWork should update imageUrl and description in Pokemon entity`() = runTest {
+    fun `doWork should update imageUrl, description, and evolvesFromId in Pokemon entity`() = runTest {
+        // Arrange
+        val pokemonId = 814
+        val imageUrl = "https://example.com/raboot.png"
+        val description = "A cute rabbit."
+        val evolvesFromId = 813
+        coEvery { workerParameters.inputData } returns workDataOf("POKEMON_ID" to pokemonId)
+        val detailResponse = PokemonDetailResponse(
+            id = pokemonId,
+            name = "raboot",
+            sprites = Sprites(other = OtherSprites(officialArtwork = OfficialArtwork(frontDefault = imageUrl))),
+            types = listOf(PokemonType(TypeDetail(name = "fire")))
+        )
+        val speciesResponse = PokemonSpeciesResponse(
+            flavorTextEntries = listOf(
+                FlavorTextEntry(
+                    flavorText = description,
+                    language = Language(name = "en")
+                )
+            ),
+            evolvesFromSpecies = EvolvesFromSpecies(url = "https://pokeapi.co/api/v2/pokemon-species/813/")
+        )
+        coEvery { pokeApiService.getPokemonDetail(pokemonId) } returns detailResponse
+        coEvery { pokeApiService.getPokemonSpecies(pokemonId) } returns speciesResponse
+        coEvery { pokemonDao.getTypeByName("fire") } returns null
+        coEvery { pokemonDao.insertType(any()) } returns Unit
+        coEvery { pokemonDao.insertPokemonType(any()) } returns Unit
+        coEvery { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, evolvesFromId) } returns Unit
+
+        // Act
+        val result = worker.doWork()
+
+        // Assert
+        coVerify { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, evolvesFromId) }
+        assert(result == androidx.work.ListenableWorker.Result.success()) { "Worker failed, result was $result" }
+    }
+
+    @Test
+    fun `doWork should handle null evolvesFromSpecies`() = runTest {
         // Arrange
         val pokemonId = 813
         val imageUrl = "https://example.com/scorbunny.png"
         val description = "A cute rabbit."
+        coEvery { workerParameters.inputData } returns workDataOf("POKEMON_ID" to pokemonId)
         val detailResponse = PokemonDetailResponse(
             id = pokemonId,
             name = "scorbunny",
             sprites = Sprites(other = OtherSprites(officialArtwork = OfficialArtwork(frontDefault = imageUrl))),
-            types = listOf(PokemonType(TypeDetail(name = "grass")))
+            types = listOf(PokemonType(TypeDetail(name = "fire")))
         )
         val speciesResponse = PokemonSpeciesResponse(
             flavorTextEntries = listOf(
@@ -59,15 +98,16 @@ class PokemonDetailWorkerTest {
         )
         coEvery { pokeApiService.getPokemonDetail(pokemonId) } returns detailResponse
         coEvery { pokeApiService.getPokemonSpecies(pokemonId) } returns speciesResponse
+        coEvery { pokemonDao.getTypeByName("fire") } returns null
         coEvery { pokemonDao.insertType(any()) } returns Unit
         coEvery { pokemonDao.insertPokemonType(any()) } returns Unit
-        coEvery { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description) } returns Unit
+        coEvery { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, null) } returns Unit
 
         // Act
         val result = worker.doWork()
 
         // Assert
-        coVerify { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description) }
+        coVerify { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, null) }
         assert(result == androidx.work.ListenableWorker.Result.success()) { "Worker failed, result was $result" }
     }
 
@@ -75,6 +115,7 @@ class PokemonDetailWorkerTest {
     fun `doWork should retry on API failure`() = runTest {
         // Arrange
         val pokemonId = 1
+        coEvery { workerParameters.inputData } returns workDataOf("POKEMON_ID" to pokemonId)
         coEvery { pokeApiService.getPokemonDetail(pokemonId) } throws RuntimeException("API error")
 
         // Act

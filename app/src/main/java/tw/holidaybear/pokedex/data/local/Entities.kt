@@ -9,6 +9,7 @@ data class Pokemon(
     val name: String,
     val imageUrl: String,
     val description: String? = null,
+    val evolvesFromId: Int? = null,
     val isProcessed: Boolean = false
 )
 
