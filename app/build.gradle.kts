@@ -54,6 +54,7 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.8.1")
     implementation("androidx.compose.material3:material3:1.3.2")
     implementation("androidx.compose.runtime:runtime-livedata:1.8.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
     // Android Studio Preview support
     implementation("androidx.compose.ui:ui-tooling-preview:1.8.1")
