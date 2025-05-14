@@ -21,13 +21,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import tw.holidaybear.pokedex.ui.component.CapturedPokemonList
 import tw.holidaybear.pokedex.ui.component.TypeListItem
 import tw.holidaybear.pokedex.ui.viewmodel.MainViewModel
+import androidx.navigation.NavController
 
 @Composable
-fun MainScreen(viewModel: MainViewModel) {
+fun MainScreen(navController: NavController) {
+    val viewModel: MainViewModel = hiltViewModel()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val capturedPokemon by viewModel.capturedPokemon.collectAsStateWithLifecycle()
     val typesWithCount by viewModel.typesWithCount.collectAsStateWithLifecycle()
@@ -63,6 +66,7 @@ fun MainScreen(viewModel: MainViewModel) {
                         capturedPokemon = capturedPokemon,
                         capturedCount = capturedPokemon.size,
                         onRelease = { captureId -> viewModel.releasePokemon(captureId) },
+                        onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") },
                         modifier = Modifier
                             .height(capturedListHeight)
                             .fillMaxWidth()
@@ -75,7 +79,8 @@ fun MainScreen(viewModel: MainViewModel) {
                         count = typeWithCount.count,
                         pokemonList = viewModel.getPokemonByType(typeWithCount.type.id)
                             .collectAsStateWithLifecycle(initialValue = emptyList()).value,
-                        onCapture = { pokemonId -> viewModel.capturePokemon(pokemonId, typeWithCount.type.name) }
+                        onCapture = { pokemonId -> viewModel.capturePokemon(pokemonId, typeWithCount.type.name) },
+                        onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") }
                     )
                 }
             }

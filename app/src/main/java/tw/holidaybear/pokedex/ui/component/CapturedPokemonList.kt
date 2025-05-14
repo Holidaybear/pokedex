@@ -24,6 +24,7 @@ fun CapturedPokemonList(
     capturedPokemon: List<CapturedPokemon>,
     capturedCount: Int,
     onRelease: (Long) -> Unit,
+    onCardClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -62,7 +63,8 @@ fun CapturedPokemonList(
                 items(capturedPokemon) { captured ->
                     CapturedPokemonCard(
                         capturedPokemon = captured,
-                        onRelease = { onRelease(captured.captureId) }
+                        onRelease = { onRelease(captured.captureId) },
+                        onCardClick = { onCardClick(captured.pokemon.id) }
                     )
                 }
             }

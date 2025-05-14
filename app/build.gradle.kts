@@ -45,6 +45,8 @@ android {
 }
 
 dependencies {
+    // Accompanist Navigation Animation
+    implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
     // Core
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

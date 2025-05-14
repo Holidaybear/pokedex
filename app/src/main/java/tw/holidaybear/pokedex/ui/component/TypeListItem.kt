@@ -22,6 +22,7 @@ fun TypeListItem(
     count: Int,
     pokemonList: List<Pokemon>,
     onCapture: (Int) -> Unit,
+    onCardClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -57,7 +58,8 @@ fun TypeListItem(
             items(pokemonList) { pokemon ->
                 PokemonCard(
                     pokemon = pokemon,
-                    onCapture = { onCapture(pokemon.id) }
+                    onCapture = { onCapture(pokemon.id) },
+                    onCardClick = { onCardClick(pokemon.id) }
                 )
             }
         }

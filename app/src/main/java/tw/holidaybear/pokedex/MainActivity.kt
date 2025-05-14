@@ -9,10 +9,8 @@ import androidx.compose.foundation.layout.padding
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import tw.holidaybear.pokedex.ui.navigation.NavGraph
 import tw.holidaybear.pokedex.ui.theme.PokedexTheme
-import tw.holidaybear.pokedex.ui.viewmodel.MainViewModel
-import tw.holidaybear.pokedex.ui.screen.MainScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -26,8 +24,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(paddingValues = innerPadding)
                     ) {
-                        val viewModel: MainViewModel = hiltViewModel()
-                        MainScreen(viewModel = viewModel)
+                        NavGraph()
                     }
                 }
             }

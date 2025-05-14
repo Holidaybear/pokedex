@@ -12,9 +12,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import tw.holidaybear.pokedex.R
 import tw.holidaybear.pokedex.data.local.Pokemon
 
@@ -22,15 +25,21 @@ import tw.holidaybear.pokedex.data.local.Pokemon
 fun PokemonCard(
     pokemon: Pokemon,
     onCapture: () -> Unit,
+    onCardClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(4.dp),
+        modifier = modifier
+            .padding(4.dp)
+            .clickable(enabled = onCardClick != null) { onCardClick?.invoke() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box {
-            Image(
-                painter = rememberAsyncImagePainter(pokemon.imageUrl),
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(pokemon.imageUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = pokemon.name,
                 modifier = Modifier.size(100.dp)
             )
