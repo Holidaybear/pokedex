@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -55,11 +56,15 @@ fun TypeListItem(
                 end = 16.dp
             )
         ) {
-            items(pokemonList) { pokemon ->
+            items(
+                items = pokemonList,
+                key = { pokemon -> pokemon.id }
+            ) { pokemon ->
                 PokemonCard(
                     pokemon = pokemon,
                     onCapture = { onCapture(pokemon.id) },
-                    onCardClick = { onCardClick(pokemon.id) }
+                    onCardClick = { onCardClick(pokemon.id) },
+                    modifier = Modifier.width(120.dp)
                 )
             }
         }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
@@ -64,7 +65,8 @@ fun CapturedPokemonList(
                     CapturedPokemonCard(
                         capturedPokemon = captured,
                         onRelease = { onRelease(captured.captureId) },
-                        onCardClick = { onCardClick(captured.pokemon.id) }
+                        onCardClick = { onCardClick(captured.pokemon.id) },
+                        modifier = Modifier.width(120.dp)
                     )
                 }
             }

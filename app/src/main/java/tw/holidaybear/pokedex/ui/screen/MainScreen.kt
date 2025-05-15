@@ -29,18 +29,18 @@ import tw.holidaybear.pokedex.ui.viewmodel.MainViewModel
 import androidx.navigation.NavController
 
 @Composable
-fun MainScreen(navController: NavController) {
-    val viewModel: MainViewModel = hiltViewModel()
+fun MainScreen(navController: NavController, viewModel: MainViewModel = hiltViewModel()) {
     val error by viewModel.error.collectAsStateWithLifecycle()
     val capturedPokemon by viewModel.capturedPokemon.collectAsStateWithLifecycle()
     val typesWithCount by viewModel.typesWithCount.collectAsStateWithLifecycle()
+    val pokemonByType by viewModel.pokemonByType.collectAsStateWithLifecycle()
 
     when {
         error != null -> {
             // Error Handling
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = error ?: "Something Wrong", color = Color.Black, modifier = Modifier.padding(16.dp))
+                    Text(text = error ?: "Something went wrong", color = Color.Black, modifier = Modifier.padding(16.dp))
                     Spacer(Modifier.height(16.dp))
                     Button(onClick = { viewModel.fetchAndSync() }) {
                         Text("Retry")
@@ -55,32 +55,34 @@ fun MainScreen(navController: NavController) {
         }
         else -> {
             val lazyListState = rememberLazyListState()
-            val capturedListHeight = 200.dp
 
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier.fillMaxSize()
             ) {
-                item {
+                item(key = "captured_list") {
                     CapturedPokemonList(
                         capturedPokemon = capturedPokemon,
                         capturedCount = capturedPokemon.size,
                         onRelease = { captureId -> viewModel.releasePokemon(captureId) },
                         onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") },
                         modifier = Modifier
-                            .height(capturedListHeight)
+                            .height(200.dp)
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.background)
                     )
                 }
-                items(typesWithCount) { typeWithCount ->
+                items(
+                    items = typesWithCount,
+                    key = { typeWithCount -> typeWithCount.type.id }
+                ) { typeWithCount ->
                     TypeListItem(
                         type = typeWithCount.type,
                         count = typeWithCount.count,
-                        pokemonList = viewModel.getPokemonByType(typeWithCount.type.id)
-                            .collectAsStateWithLifecycle(initialValue = emptyList()).value,
+                        pokemonList = pokemonByType[typeWithCount.type.id] ?: emptyList(),
                         onCapture = { pokemonId -> viewModel.capturePokemon(pokemonId, typeWithCount.type.name) },
-                        onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") }
+                        onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") },
+                        modifier = Modifier.animateItem()
                     )
                 }
             }

@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import tw.holidaybear.pokedex.R
 import tw.holidaybear.pokedex.data.model.CapturedPokemon
@@ -38,6 +38,8 @@ fun CapturedPokemonCard(
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(capturedPokemon.pokemon.imageUrl)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
                     .crossfade(true)
                     .build(),
                 contentDescription = capturedPokemon.pokemon.name,

@@ -24,12 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import tw.holidaybear.pokedex.ui.viewmodel.DetailViewModel
 
 @Composable
-fun DetailScreen(navController: NavController, pokemonId: Int) {
-    val viewModel: DetailViewModel = hiltViewModel()
+fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: DetailViewModel = hiltViewModel()) {
     val pokemon = viewModel.pokemon.collectAsState().value
 
     if (pokemon == null) {
@@ -68,6 +68,8 @@ fun DetailScreen(navController: NavController, pokemonId: Int) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(pokemon.imageUrl)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
                 .crossfade(true)
                 .build(),
             contentDescription = "${pokemon.name} image",
