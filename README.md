@@ -17,10 +17,6 @@ The Pokémon Illustrated Guide is a simple Android app that allows users to expl
    - Sorted by capture timestamp (descending, most recent first).
    - Supports duplicates (e.g., Charizard captured multiple times in Fire category will appear multiple times).
    - Each Pokémon has a fixed Pokéball icon in the top-right corner; clicking it releases the specific capture record, removing it from the list.
-   - **Scroll Behavior**:
-     - When scrolling down the main screen (vertical `LazyColumn`), the My Pocket List scrolls up and hides.
-     - When scrolling up at any position, the My Pocket List reappears at the top.
-     - When scrolled to the top, the My Pocket List is fixed at the top, appearing as part of the ordinary list.
 
 2. **Pokémon Collection Display (Type List)**:
    - A vertically scrollable list of type categories (e.g., Bug, Dragon, Fire).
@@ -94,18 +90,12 @@ The app follows an **MVVM (Model-View-ViewModel)** architecture for maintainabil
   ```
   [My Pocket List: Horizontal LazyRow]
   [Captured: Charizard (Fire) | Charizard (Fire) | Pikachu (Electric) | ...]
-
   [Type List: Vertical LazyColumn]
   [Dragon (2): Horizontal LazyRow]
   [Garchomp | Dragonite | ...]
   [Fire (3): Horizontal LazyRow]
   [Charizard | Charmander | ...]
   ```
-- **Scroll Behavior**:
-  - My Pocket List is part of the `LazyColumn` but dynamically hides/shows based on scroll direction.
-  - Scroll down: My Pocket List scrolls up and hides.
-  - Scroll up: My Pocket List reappears at the top.
-  - Scroll to top: My Pocket List is fixed at the top, appearing as part of the list.
 - **Dynamic Loading**:
   - Type Lists appear only when at least one Pokémon is processed (`isProcessed = true`).
   - Category counts (e.g., "Fire (3)") update in real-time without animation.
