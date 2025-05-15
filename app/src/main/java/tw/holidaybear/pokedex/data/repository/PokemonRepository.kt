@@ -12,6 +12,7 @@ import tw.holidaybear.pokedex.data.model.CapturedPokemon
 import tw.holidaybear.pokedex.data.model.TypeWithCount
 import tw.holidaybear.pokedex.data.remote.PokeApiService
 import kotlinx.coroutines.flow.Flow
+import tw.holidaybear.pokedex.data.local.Type
 import tw.holidaybear.pokedex.util.PokemonDetailWorker
 
 class PokemonRepository @Inject constructor(
@@ -79,5 +80,9 @@ class PokemonRepository @Inject constructor(
 
     suspend fun getPokemonDetails(pokemonId: Int): Pokemon? {
         return pokemonDao.getPokemonById(pokemonId)
+    }
+
+    fun getTypesForPokemon(pokemonId: Int): Flow<List<Type>> {
+        return pokemonDao.getTypesForPokemon(pokemonId)
     }
 }

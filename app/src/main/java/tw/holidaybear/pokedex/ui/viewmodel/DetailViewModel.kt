@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import tw.holidaybear.pokedex.data.local.Pokemon
+import tw.holidaybear.pokedex.data.local.Type
 import tw.holidaybear.pokedex.data.repository.PokemonRepository
 import javax.inject.Inject
 
@@ -18,13 +19,20 @@ class DetailViewModel @Inject constructor(
     private val _pokemon = MutableStateFlow<Pokemon?>(null)
     val pokemon: StateFlow<Pokemon?> = _pokemon
 
+    private val _types = MutableStateFlow<List<Type>>(emptyList())
+    val types: StateFlow<List<Type>> = _types
+
     private val _evolvesFromPokemon = MutableStateFlow<Pokemon?>(null)
     val evolvesFromPokemon: StateFlow<Pokemon?> = _evolvesFromPokemon
 
     fun loadPokemonDetails(pokemonId: Int) {
         viewModelScope.launch {
-            val pokemonDetails = pokemonRepository.getPokemonDetails(pokemonId)
-            _pokemon.value = pokemonDetails
+            pokemonRepository.getPokemonDetails(pokemonId)?.let { pokemon ->
+                _pokemon.value = pokemon
+            }
+            pokemonRepository.getTypesForPokemon(pokemonId).collect { types ->
+                _types.value = types
+            }
         }
     }
 

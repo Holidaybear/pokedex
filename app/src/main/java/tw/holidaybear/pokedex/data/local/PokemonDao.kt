@@ -49,4 +49,10 @@ interface PokemonDao {
 
     @Query("SELECT * FROM pokemon WHERE id = :pokemonId")
     suspend fun getPokemonById(pokemonId: Int): Pokemon?
+
+    @Query("SELECT t.* " +
+            "FROM type t " +
+            "INNER JOIN pokemon_type pt ON t.id = pt.typeId " +
+            "WHERE pt.pokemonId = :pokemonId")
+    fun getTypesForPokemon(pokemonId: Int): Flow<List<Type>>
 }
