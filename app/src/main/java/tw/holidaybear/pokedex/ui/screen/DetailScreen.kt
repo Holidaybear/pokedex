@@ -36,6 +36,7 @@ import tw.holidaybear.pokedex.ui.viewmodel.DetailViewModel
 fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: DetailViewModel = hiltViewModel()) {
     val pokemon = viewModel.pokemon.collectAsState().value
     val types = viewModel.types.collectAsState().value
+    val prevPokemon = viewModel.prevPokemon.collectAsState().value
 
     if (pokemon == null) {
         viewModel.loadPokemonDetails(pokemonId)
@@ -53,7 +54,7 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
-                onClick = { navController.popBackStack() }
+                onClick = { navController.navigateUp() }
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -114,13 +115,11 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
             }
         }
 
-        pokemon.evolvesFromId?.let { evolvesFromId ->
-            val evolvesFromPokemon = viewModel.evolvesFromPokemon.collectAsState().value
-            viewModel.loadEvolvesFromPokemonDetails(evolvesFromId)
+        prevPokemon?.let {
             Row(
                 modifier = Modifier
                     .clickable {
-                        navController.navigate("detail/$evolvesFromId")
+                        navController.navigate("detail/${it.id}")
                     }
                     .fillMaxWidth()
                     .padding(vertical = 16.dp, horizontal = 8.dp)
@@ -128,10 +127,10 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
                 Column {
                     Text(
                         text = "Evolves from",
-                        style = MaterialTheme.typography.titleSmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
-                        text = evolvesFromPokemon?.name?.replaceFirstChar { it.uppercase() } ?: "",
+                        text = it.name.replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -140,10 +139,10 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
 
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(evolvesFromPokemon?.imageUrl)
+                        .data(it.imageUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = "${evolvesFromPokemon?.name} image",
+                    contentDescription = "${it.name} image",
                     modifier = Modifier.size(50.dp)
                 )
             }
@@ -151,7 +150,9 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(text = pokemon.description ?: "",
+        Text(
+            text = pokemon.description ?: "",
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)

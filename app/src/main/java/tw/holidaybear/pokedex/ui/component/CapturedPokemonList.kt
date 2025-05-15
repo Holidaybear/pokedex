@@ -66,7 +66,7 @@ fun CapturedPokemonList(
                         capturedPokemon = captured,
                         onRelease = { onRelease(captured.captureId) },
                         onCardClick = { onCardClick(captured.pokemon.id) },
-                        modifier = Modifier.width(120.dp)
+                        modifier = Modifier.width(110.dp)
                     )
                 }
             }

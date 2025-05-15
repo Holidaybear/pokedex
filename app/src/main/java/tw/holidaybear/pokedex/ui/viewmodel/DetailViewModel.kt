@@ -22,24 +22,20 @@ class DetailViewModel @Inject constructor(
     private val _types = MutableStateFlow<List<Type>>(emptyList())
     val types: StateFlow<List<Type>> = _types
 
-    private val _evolvesFromPokemon = MutableStateFlow<Pokemon?>(null)
-    val evolvesFromPokemon: StateFlow<Pokemon?> = _evolvesFromPokemon
+    private val _prevPokemon = MutableStateFlow<Pokemon?>(null)
+    val prevPokemon: StateFlow<Pokemon?> = _prevPokemon
 
     fun loadPokemonDetails(pokemonId: Int) {
         viewModelScope.launch {
             pokemonRepository.getPokemonDetails(pokemonId)?.let { pokemon ->
                 _pokemon.value = pokemon
+                pokemon.evolvesFromId?.let { evolvesFromId ->
+                    _prevPokemon.value = pokemonRepository.getPokemonDetails(evolvesFromId)
+                }
             }
             pokemonRepository.getTypesForPokemon(pokemonId).collect { types ->
                 _types.value = types
             }
-        }
-    }
-
-    fun loadEvolvesFromPokemonDetails(evolvesFromId: Int) {
-        viewModelScope.launch {
-            val pokemonDetails = pokemonRepository.getPokemonDetails(evolvesFromId)
-            _evolvesFromPokemon.value = pokemonDetails
         }
     }
 }

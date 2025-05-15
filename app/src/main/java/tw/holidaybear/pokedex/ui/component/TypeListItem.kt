@@ -64,7 +64,7 @@ fun TypeListItem(
                     pokemon = pokemon,
                     onCapture = { onCapture(pokemon.id) },
                     onCardClick = { onCardClick(pokemon.id) },
-                    modifier = Modifier.width(120.dp)
+                    modifier = Modifier.width(110.dp)
                 )
             }
         }
