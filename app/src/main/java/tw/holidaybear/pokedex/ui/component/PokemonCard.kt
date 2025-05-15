@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -31,6 +32,7 @@ fun PokemonCard(
     Column(
         modifier = modifier
             .padding(4.dp)
+            .testTag("PokemonCard_${pokemon.id}")
             .clickable(enabled = onCardClick != null) { onCardClick?.invoke() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -52,6 +54,7 @@ fun PokemonCard(
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
                     .size(24.dp)
+                    .testTag("CapturePokeball_${pokemon.id}")
                     .clickable { onCapture() }
             )
         }

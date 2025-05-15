@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,21 +39,32 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel = hiltView
     when {
         error != null -> {
             // Error Handling
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = error ?: "Something went wrong", color = Color.Black, modifier = Modifier.padding(16.dp))
+                    Text(
+                        text = error ?: "Something went wrong",
+                        color = Color.Black,
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .testTag("ErrorMessage")
+                    )
                     Spacer(Modifier.height(16.dp))
-                    Button(onClick = { viewModel.fetchAndSync() }) {
+                    Button(
+                        onClick = { viewModel.fetchAndSync() },
+                        modifier = Modifier.testTag("RetryButton")
+                    ) {
                         Text("Retry")
                     }
                 }
             }
         }
+
         typesWithCount.isEmpty() -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(modifier = Modifier.testTag("ProgressIndicator"))
             }
         }
+
         else -> {
             val lazyListState = rememberLazyListState()
 
@@ -80,7 +92,12 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel = hiltView
                         type = typeWithCount.type,
                         count = typeWithCount.count,
                         pokemonList = pokemonByType[typeWithCount.type.id] ?: emptyList(),
-                        onCapture = { pokemonId -> viewModel.capturePokemon(pokemonId, typeWithCount.type.name) },
+                        onCapture = { pokemonId ->
+                            viewModel.capturePokemon(
+                                pokemonId,
+                                typeWithCount.type.name
+                            )
+                        },
                         onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") },
                         modifier = Modifier.animateItem()
                     )

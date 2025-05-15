@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,7 +34,11 @@ import tw.holidaybear.pokedex.ui.theme.Gray300
 import tw.holidaybear.pokedex.ui.viewmodel.DetailViewModel
 
 @Composable
-fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: DetailViewModel = hiltViewModel()) {
+fun DetailScreen(
+    navController: NavController,
+    pokemonId: Int,
+    viewModel: DetailViewModel = hiltViewModel()
+) {
     val pokemon = viewModel.pokemon.collectAsState().value
     val types = viewModel.types.collectAsState().value
     val prevPokemon = viewModel.prevPokemon.collectAsState().value
@@ -54,7 +59,8 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
-                onClick = { navController.navigateUp() }
+                onClick = { navController.navigateUp() },
+                modifier = Modifier.testTag("BackButton")
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -81,7 +87,8 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
             contentDescription = "${pokemon.name} image",
             modifier = Modifier
                 .size(150.dp)
-                .padding(top = 16.dp),
+                .padding(top = 16.dp)
+                .testTag("PokemonImage_${pokemon.id}")
         )
 
         Text(
@@ -123,6 +130,7 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
                     }
                     .fillMaxWidth()
                     .padding(vertical = 16.dp, horizontal = 8.dp)
+                    .testTag("PrevPokemon_${it.id}")
             ) {
                 Column {
                     Text(
@@ -143,7 +151,9 @@ fun DetailScreen(navController: NavController, pokemonId: Int, viewModel: Detail
                         .crossfade(true)
                         .build(),
                     contentDescription = "${it.name} image",
-                    modifier = Modifier.size(50.dp)
+                    modifier = Modifier
+                        .size(50.dp)
+                        .testTag("PrevPokemonImage_${it.id}")
                 )
             }
         }
