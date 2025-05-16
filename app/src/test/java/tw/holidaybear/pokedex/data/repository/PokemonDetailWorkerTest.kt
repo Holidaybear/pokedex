@@ -1,6 +1,7 @@
 package tw.holidaybear.pokedex.data.repository
 
 import android.content.Context
+import androidx.work.ListenableWorker.Result
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import io.mockk.coEvery
@@ -71,7 +72,7 @@ class PokemonDetailWorkerTest {
 
         // Assert
         coVerify { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, evolvesFromId) }
-        assert(result == androidx.work.ListenableWorker.Result.success()) { "Worker failed, result was $result" }
+        assert(result == Result.success()) { "Worker failed, result was $result" }
     }
 
     @Test
@@ -108,7 +109,7 @@ class PokemonDetailWorkerTest {
 
         // Assert
         coVerify { pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, null) }
-        assert(result == androidx.work.ListenableWorker.Result.success()) { "Worker failed, result was $result" }
+        assert(result == Result.success()) { "Worker failed, result was $result" }
     }
 
     @Test
@@ -122,6 +123,6 @@ class PokemonDetailWorkerTest {
         val result = worker.doWork()
 
         // Assert
-        assert(result == androidx.work.ListenableWorker.Result.retry()) { "Worker did not retry, result was $result" }
+        assert(result == Result.retry()) { "Worker did not retry, result was $result" }
     }
 }
