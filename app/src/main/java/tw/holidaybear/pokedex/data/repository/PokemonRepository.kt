@@ -1,29 +1,26 @@
 package tw.holidaybear.pokedex.data.repository
 
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import javax.inject.Inject
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import tw.holidaybear.pokedex.data.local.CaptureRecord
 import tw.holidaybear.pokedex.data.local.CaptureRecordDao
 import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.local.PokemonDao
+import tw.holidaybear.pokedex.data.local.PokemonType
+import tw.holidaybear.pokedex.data.local.Type
 import tw.holidaybear.pokedex.data.model.CapturedPokemon
 import tw.holidaybear.pokedex.data.model.TypeWithCount
 import tw.holidaybear.pokedex.data.remote.PokeApiService
-import kotlinx.coroutines.flow.Flow
-import tw.holidaybear.pokedex.data.local.Type
-import tw.holidaybear.pokedex.util.PokemonDetailWorker
+import javax.inject.Inject
 
 class PokemonRepository @Inject constructor(
     private val pokeApiService: PokeApiService,
     private val pokemonDao: PokemonDao,
-    private val captureRecordDao: CaptureRecordDao,
-    private val workManager: WorkManager
+    private val captureRecordDao: CaptureRecordDao
 ) {
 
     suspend fun fetchAndStorePokemonList() {
-        // Check if database already has processed Pokemon
         val processedCount = pokemonDao.getProcessedPokemonCount()
         if (processedCount < 151) {
             val unprocessedPokemonIds = pokemonDao.getUnprocessedPokemonIds()
@@ -42,13 +39,47 @@ class PokemonRepository @Inject constructor(
                     )
                 }
             }
-            // Enqueue Worker tasks for unprocessed Pokemon
-            pokemonDao.getUnprocessedPokemonIds().forEach { pokemonId ->
-                val workRequest = OneTimeWorkRequestBuilder<PokemonDetailWorker>()
-                    .setInputData(workDataOf("POKEMON_ID" to pokemonId))
-                    .build()
-                workManager.enqueue(workRequest)
+
+            coroutineScope {
+                pokemonDao.getUnprocessedPokemonIds().forEach { pokemonId ->
+                    launch {
+                        fetchAndProcessSinglePokemon(pokemonId)
+                    }
+                }
             }
+        }
+    }
+
+    private suspend fun fetchAndProcessSinglePokemon(pokemonId: Int) {
+        try {
+            val detailResponse = pokeApiService.getPokemonDetail(pokemonId)
+            val imageUrl = detailResponse.sprites.other.officialArtwork.frontDefault
+
+            val speciesResponse = pokeApiService.getPokemonSpecies(pokemonId)
+            val description = speciesResponse.flavorTextEntries
+                .firstOrNull { it.language.name == "en" }
+                ?.flavorText
+                ?.replace("", " ") ?: ""
+
+            val evolvesFromId = speciesResponse . evolvesFromSpecies ?. url
+            ?.let { url -> url.split("/").lastOrNull { it.isNotBlank() }?.toIntOrNull() }
+
+            detailResponse.types.forEach { pokemonType ->
+                val typeName = pokemonType.type.name
+                val existingType = pokemonDao.getTypeByName(typeName)
+                val typeId = if (existingType != null) {
+                    existingType.id
+                } else {
+                    val newTypeId = typeName.hashCode()
+                    pokemonDao.insertType(Type(id = newTypeId, name = typeName))
+                    newTypeId
+                }
+                pokemonDao.insertPokemonType(PokemonType(pokemonId = pokemonId, typeId = typeId))
+            }
+            pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, evolvesFromId)
+        } catch (e: Exception) {
+            // You might want to add more sophisticated error handling here
+            e.printStackTrace()
         }
     }
 
