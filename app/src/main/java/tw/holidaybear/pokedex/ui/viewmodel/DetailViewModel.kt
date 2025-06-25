@@ -29,6 +29,10 @@ class DetailViewModel @Inject constructor(
         viewModelScope.launch {
             // Ensure species info is loaded before observing the details
             pokemonRepository.ensureSpeciesInfoIsLoaded(pokemonId)
+                .onFailure {
+                    // Optionally handle the failure, e.g., show a toast or log it
+                    // For now, we'll just let the UI show the data without description
+                }
 
             pokemonRepository.getPokemonDetails(pokemonId)?.let { pokemon ->
                 _pokemon.value = pokemon

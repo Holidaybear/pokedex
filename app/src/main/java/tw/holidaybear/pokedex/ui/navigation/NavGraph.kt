@@ -15,13 +15,13 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = "main"
+        startDestination = Screen.Main.route
     ) {
-        composable("main") {
+        composable(Screen.Main.route) {
             MainScreen(navController)
         }
         composable(
-            "detail/{pokemonId}",
+            route = Screen.Detail.route,
             arguments = listOf(navArgument("pokemonId") { type = NavType.IntType })
         ) { backStackEntry ->
             val pokemonId = backStackEntry.arguments?.getInt("pokemonId") ?: 0

@@ -25,33 +25,39 @@ class PokemonRepository @Inject constructor(
         return pokemonDao.getProcessedPokemonAndTheirTypes()
     }
 
-    suspend fun fetchAndStorePokemonList() {
-        val processedCount = pokemonDao.getProcessedPokemonCount()
-        if (processedCount < 151) {
-            val unprocessedPokemonIds = pokemonDao.getUnprocessedPokemonIds()
-            if (unprocessedPokemonIds.isEmpty()) {
-                val response = pokeApiService.getPokemonList(151)
-                response.results.forEach { item ->
-                    pokemonDao.insertPokemon(
-                        Pokemon(
-                            id = item.id,
-                            name = item.name,
-                            imageUrl = "",
-                            description = null,
-                            evolvesFromId = null,
-                            isProcessed = false
+    suspend fun fetchAndStorePokemonList(): Result<Unit> {
+        return try {
+            val processedCount = pokemonDao.getProcessedPokemonCount()
+            if (processedCount < 151) {
+                val unprocessedPokemonIds = pokemonDao.getUnprocessedPokemonIds()
+                if (unprocessedPokemonIds.isEmpty()) {
+                    val response = pokeApiService.getPokemonList(151)
+                    response.results.forEach { item ->
+                        pokemonDao.insertPokemon(
+                            Pokemon(
+                                id = item.id,
+                                name = item.name,
+                                imageUrl = "",
+                                description = null,
+                                evolvesFromId = null,
+                                isProcessed = false
+                            )
                         )
-                    )
+                    }
                 }
-            }
 
-            coroutineScope {
-                pokemonDao.getUnprocessedPokemonIds().forEach { pokemonId ->
-                    launch {
-                        fetchAndProcessSinglePokemon(pokemonId)
+                coroutineScope {
+                    pokemonDao.getUnprocessedPokemonIds().forEach { pokemonId ->
+                        launch {
+                            fetchAndProcessSinglePokemon(pokemonId)
+                        }
                     }
                 }
             }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(e)
         }
     }
 
@@ -59,10 +65,6 @@ class PokemonRepository @Inject constructor(
         try {
             val detailResponse = pokeApiService.getPokemonDetail(pokemonId)
             val imageUrl = detailResponse.sprites.other.officialArtwork.frontDefault
-
-            // Step 3: Remove species fetching from initial sync
-            // val speciesResponse = pokeApiService.getPokemonSpecies(pokemonId)
-            // ... (description and evolvesFromId logic removed)
 
             detailResponse.types.forEach { pokemonType ->
                 val typeName = pokemonType.type.name
@@ -76,18 +78,16 @@ class PokemonRepository @Inject constructor(
                 }
                 pokemonDao.insertPokemonType(PokemonType(pokemonId = pokemonId, typeId = typeId))
             }
-            // Only update with basic info and mark as processed
             pokemonDao.updatePokemonDetails(pokemonId, imageUrl, null, null)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    suspend fun ensureSpeciesInfoIsLoaded(pokemonId: Int) {
-        val pokemon = pokemonDao.getPokemonById(pokemonId)
-        // Check if description is null, which implies species info hasn't been fetched
-        if (pokemon != null && pokemon.description == null) {
-            try {
+    suspend fun ensureSpeciesInfoIsLoaded(pokemonId: Int): Result<Unit> {
+        return try {
+            val pokemon = pokemonDao.getPokemonById(pokemonId)
+            if (pokemon != null && pokemon.description == null) {
                 val speciesResponse = pokeApiService.getPokemonSpecies(pokemonId)
                 val description = speciesResponse.flavorTextEntries
                     .firstOrNull { it.language.name == "en" }
@@ -97,11 +97,12 @@ class PokemonRepository @Inject constructor(
                 val evolvesFromId = speciesResponse.evolvesFromSpecies?.url
                     ?.let { url -> url.split("/").lastOrNull { it.isNotBlank() }?.toIntOrNull() }
 
-                // We already have the image url, so we pass it again
                 pokemonDao.updatePokemonDetails(pokemonId, pokemon.imageUrl, description, evolvesFromId)
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(e)
         }
     }
 

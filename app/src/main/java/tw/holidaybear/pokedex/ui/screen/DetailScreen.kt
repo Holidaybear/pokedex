@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,6 +31,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import tw.holidaybear.pokedex.R
+import tw.holidaybear.pokedex.ui.navigation.Screen
 import tw.holidaybear.pokedex.ui.theme.Gray300
 import tw.holidaybear.pokedex.ui.viewmodel.DetailViewModel
 
@@ -122,23 +125,23 @@ fun DetailScreen(
             }
         }
 
-        prevPokemon?.let {
+        prevPokemon?.let { prev ->
             Row(
                 modifier = Modifier
-                    .clickable {
-                        navController.navigate("detail/${it.id}")
+                    .clickable { 
+                        navController.navigate(Screen.Detail.createRoute(prev.id))
                     }
                     .fillMaxWidth()
                     .padding(vertical = 16.dp, horizontal = 8.dp)
-                    .testTag("PrevPokemon_${it.id}")
+                    .testTag("PrevPokemon_${prev.id}")
             ) {
                 Column {
                     Text(
-                        text = "Evolves from",
+                        text = stringResource(id = R.string.evolves_from),
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Text(
-                        text = it.name.replaceFirstChar { it.uppercase() },
+                        text = prev.name.replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
@@ -147,13 +150,13 @@ fun DetailScreen(
 
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(it.imageUrl)
+                        .data(prev.imageUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = "${it.name} image",
+                    contentDescription = "${prev.name} image",
                     modifier = Modifier
                         .size(50.dp)
-                        .testTag("PrevPokemonImage_${it.id}")
+                        .testTag("PrevPokemonImage_${prev.id}")
                 )
             }
         }

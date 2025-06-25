@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Pokedex</string>
+    <string name="evolves_from">Evolves from</string>
+    <string name="retry">Retry</string>
 </resources>

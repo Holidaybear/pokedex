@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -21,28 +20,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import tw.holidaybear.pokedex.R
 import tw.holidaybear.pokedex.ui.component.CapturedPokemonList
 import tw.holidaybear.pokedex.ui.component.TypeListItem
 import tw.holidaybear.pokedex.ui.viewmodel.MainViewModel
-import androidx.navigation.NavController
+import tw.holidaybear.pokedex.ui.navigation.Screen
 
 @Composable
 fun MainScreen(navController: NavController, viewModel: MainViewModel = hiltViewModel()) {
-    val error by viewModel.error.collectAsStateWithLifecycle()
-    val capturedPokemon by viewModel.capturedPokemon.collectAsStateWithLifecycle()
-    val typesWithCount by viewModel.typesWithCount.collectAsStateWithLifecycle()
-    val pokemonByType by viewModel.pokemonByType.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     when {
-        error != null -> {
+        uiState.error != null -> {
             // Error Handling
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = error ?: "Something went wrong",
+                        text = uiState.error ?: "Something went wrong",
                         color = Color.Black,
                         modifier = Modifier
                             .padding(16.dp)
@@ -53,31 +52,28 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel = hiltView
                         onClick = { viewModel.fetchAndSync() },
                         modifier = Modifier.testTag("RetryButton")
                     ) {
-                        Text("Retry")
+                        Text(stringResource(id = R.string.retry))
                     }
                 }
             }
         }
 
-        typesWithCount.isEmpty() -> {
+        uiState.isLoading -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(modifier = Modifier.testTag("ProgressIndicator"))
             }
         }
 
         else -> {
-            val lazyListState = rememberLazyListState()
-
             LazyColumn(
-                state = lazyListState,
                 modifier = Modifier.fillMaxSize()
             ) {
                 item(key = "captured_list") {
                     CapturedPokemonList(
-                        capturedPokemon = capturedPokemon,
-                        capturedCount = capturedPokemon.size,
+                        capturedPokemon = uiState.capturedPokemon,
+                        capturedCount = uiState.capturedPokemon.size,
                         onRelease = { captureId -> viewModel.releasePokemon(captureId) },
-                        onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") },
+                        onCardClick = { pokemonId -> navController.navigate(Screen.Detail.createRoute(pokemonId)) },
                         modifier = Modifier
                             .height(200.dp)
                             .fillMaxWidth()
@@ -85,20 +81,20 @@ fun MainScreen(navController: NavController, viewModel: MainViewModel = hiltView
                     )
                 }
                 items(
-                    items = typesWithCount,
+                    items = uiState.typesWithCount,
                     key = { typeWithCount -> typeWithCount.type.id }
                 ) { typeWithCount ->
                     TypeListItem(
                         type = typeWithCount.type,
                         count = typeWithCount.count,
-                        pokemonList = pokemonByType[typeWithCount.type.id] ?: emptyList(),
+                        pokemonList = uiState.pokemonByType[typeWithCount.type.id] ?: emptyList(),
                         onCapture = { pokemonId ->
                             viewModel.capturePokemon(
                                 pokemonId,
                                 typeWithCount.type.name
                             )
                         },
-                        onCardClick = { pokemonId -> navController.navigate("detail/$pokemonId") },
+                        onCardClick = { pokemonId -> navController.navigate(Screen.Detail.createRoute(pokemonId)) },
                         modifier = Modifier.animateItem()
                     )
                 }
