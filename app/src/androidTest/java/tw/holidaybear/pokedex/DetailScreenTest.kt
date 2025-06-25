@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.verify
 import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.local.Type
+import tw.holidaybear.pokedex.ui.navigation.Screen
 import tw.holidaybear.pokedex.ui.screen.DetailScreen
 import tw.holidaybear.pokedex.ui.viewmodel.DetailViewModel
 
@@ -106,7 +107,7 @@ class DetailScreenTest {
         }
 
         composeTestRule.onNodeWithTag("PrevPokemon_1").performClick()
-        verify { mockNavController.navigate("detail/1") }
+        verify { mockNavController.navigate(Screen.Detail.createRoute(1)) }
     }
 
     @Test

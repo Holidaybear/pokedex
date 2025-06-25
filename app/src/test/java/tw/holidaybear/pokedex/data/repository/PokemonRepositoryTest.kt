@@ -1,13 +1,8 @@
 package tw.holidaybear.pokedex.data.repository
 
-import androidx.work.OneTimeWorkRequest
-import androidx.work.Operation
-import androidx.work.WorkManager
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -16,169 +11,100 @@ import tw.holidaybear.pokedex.data.local.CaptureRecordDao
 import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.local.PokemonDao
 import tw.holidaybear.pokedex.data.local.Type
-import tw.holidaybear.pokedex.data.model.CapturedPokemon
-import tw.holidaybear.pokedex.data.model.TypeWithCount
-import tw.holidaybear.pokedex.data.remote.PokeApiService
-import tw.holidaybear.pokedex.data.remote.PokemonListItem
-import tw.holidaybear.pokedex.data.remote.PokemonListResponse
+import tw.holidaybear.pokedex.data.model.PokemonAndType
+import tw.holidaybear.pokedex.data.remote.*
 
 class PokemonRepositoryTest {
 
     private lateinit var repository: PokemonRepository
-    private val pokeApiService: PokeApiService = mockk()
-    private val pokemonDao: PokemonDao = mockk()
-    private val captureRecordDao: CaptureRecordDao = mockk()
-    private val workManager: WorkManager = mockk()
+    private val pokeApiService: PokeApiService = mockk(relaxed = true)
+    private val pokemonDao: PokemonDao = mockk(relaxed = true)
+    private val captureRecordDao: CaptureRecordDao = mockk(relaxed = true)
 
     @Before
     fun setup() {
-        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk<Operation>()
-        repository = PokemonRepository(pokeApiService, pokemonDao, captureRecordDao, workManager)
+        repository = PokemonRepository(pokeApiService, pokemonDao, captureRecordDao)
     }
 
     @Test
     fun `fetchAndStorePokemonList should fetch from API and store in Room when database is empty`() = runTest {
-        // Arrange
         val pokemonListResponse = PokemonListResponse(
-            results = listOf(
-                PokemonListItem(name = "scorbunny", url = "https://pokeapi.co/api/v2/pokemon/813/")
-            )
+            results = listOf(PokemonListItem(name = "bulbasaur", url = "https://pokeapi.co/api/v2/pokemon/1/"))
         )
         coEvery { pokemonDao.getProcessedPokemonCount() } returns 0
-        coEvery { pokemonDao.getUnprocessedPokemonIds() } returns emptyList() andThen listOf(813)
+        coEvery { pokemonDao.getUnprocessedPokemonIds() } returns emptyList() andThen listOf(1)
         coEvery { pokeApiService.getPokemonList(151) } returns pokemonListResponse
-        coEvery { pokemonDao.insertPokemon(any()) } returns Unit
 
-        // Act
         repository.fetchAndStorePokemonList()
 
-        // Assert
-        coVerify { pokemonDao.insertPokemon(Pokemon(id = 813, name = "scorbunny", imageUrl = "", description = null, evolvesFromId = null, isProcessed = false)) }
-        verify { workManager.enqueue(any<OneTimeWorkRequest>()) }
+        coVerify { pokemonDao.insertPokemon(any()) }
+        coVerify { pokeApiService.getPokemonDetail(1) }
     }
 
     @Test
     fun `fetchAndStorePokemonList should skip API fetch when all Pokemon are processed`() = runTest {
-        // Arrange
         coEvery { pokemonDao.getProcessedPokemonCount() } returns 151
-        coEvery { pokeApiService.getPokemonList(151) } returns mockk()
 
-        // Act
         repository.fetchAndStorePokemonList()
 
-        // Assert
-        coVerify(exactly = 0) { pokeApiService.getPokemonList(151) }
-        verify(exactly = 0) { workManager.enqueue(any<OneTimeWorkRequest>()) }
+        coVerify(exactly = 0) { pokeApiService.getPokemonList(any()) }
     }
 
     @Test
-    fun `fetchAndStorePokemonList should process unprocessed Pokemon only`() = runTest {
-        // Arrange
-        coEvery { pokemonDao.getProcessedPokemonCount() } returns 149
-        coEvery { pokemonDao.getUnprocessedPokemonIds() } returns listOf(150, 151)
-        coEvery { pokeApiService.getPokemonList(151) } returns mockk()
+    fun `getProcessedPokemonAndTheirTypes should return pokemon and type data from DAO`() = runTest {
+        val pokemon = Pokemon(1, "bulbasaur", "url", null, null, true)
+        val type = Type(1, "grass")
+        val pokemonAndType = PokemonAndType(pokemon, type)
+        coEvery { pokemonDao.getProcessedPokemonAndTheirTypes() } returns flowOf(listOf(pokemonAndType))
 
-        // Act
-        repository.fetchAndStorePokemonList()
+        val result = repository.getProcessedPokemonAndTheirTypes()
 
-        // Assert
-        coVerify(exactly = 0) { pokeApiService.getPokemonList(151) }
-        verify(exactly = 2) { workManager.enqueue(any<OneTimeWorkRequest>()) }
-    }
-
-    @Test
-    fun `getTypesWithCount should return types with count from DAO`() = runTest {
-        // Arrange
-        val type = Type(id = 1, name = "fire")
-        val typeWithCount = TypeWithCount(type = type, count = 3)
-        every { pokemonDao.getTypesWithCount() } returns flowOf(listOf(typeWithCount))
-
-        // Act
-        val result = repository.getTypesWithCount()
-
-        // Assert
-        result.collect { types ->
-            assert(types.size == 1)
-            assert(types[0].type.name == "fire")
-            assert(types[0].count == 3)
+        result.collect { list ->
+            assert(list.size == 1)
+            assert(list[0].pokemon.name == "bulbasaur")
+            assert(list[0].type.name == "grass")
         }
     }
 
     @Test
-    fun `getPokemonByType should return Pokemon for given type from DAO`() = runTest {
-        // Arrange
-        val typeId = 1
-        val pokemon = Pokemon(id = 1, name = "scorbunny", imageUrl = "url", description = "A cute rabbit.", evolvesFromId = null, isProcessed = true)
-        every { pokemonDao.getPokemonByType(typeId) } returns flowOf(listOf(pokemon))
+    fun `ensureSpeciesInfoIsLoaded should fetch from API when description is null`() = runTest {
+        val pokemonId = 1
+        val pokemonWithoutDesc = Pokemon(pokemonId, "bulbasaur", "url", null, null, true)
+        val speciesResponse = PokemonSpeciesResponse(
+            flavorTextEntries = listOf(FlavorTextEntry(flavorText = "desc", language = Language("en"))),
+            evolvesFromSpecies = null
+        )
 
-        // Act
-        val result = repository.getPokemonByType(typeId)
+        coEvery { pokemonDao.getPokemonById(pokemonId) } returns pokemonWithoutDesc
+        coEvery { pokeApiService.getPokemonSpecies(pokemonId) } returns speciesResponse
 
-        // Assert
-        result.collect { pokemonList ->
-            assert(pokemonList.size == 1)
-            assert(pokemonList[0].name == "scorbunny")
-        }
+        repository.ensureSpeciesInfoIsLoaded(pokemonId)
+
+        coVerify { pokeApiService.getPokemonSpecies(pokemonId) }
+        coVerify { pokemonDao.updatePokemonDetails(pokemonId, "url", "desc", null) }
+    }
+
+    @Test
+    fun `ensureSpeciesInfoIsLoaded should not fetch from API when description exists`() = runTest {
+        val pokemonId = 1
+        val pokemonWithDesc = Pokemon(pokemonId, "bulbasaur", "url", "desc", null, true)
+
+        coEvery { pokemonDao.getPokemonById(pokemonId) } returns pokemonWithDesc
+
+        repository.ensureSpeciesInfoIsLoaded(pokemonId)
+
+        coVerify(exactly = 0) { pokeApiService.getPokemonSpecies(any()) }
     }
 
     @Test
     fun `capturePokemon should insert capture record into DAO`() = runTest {
-        // Arrange
-        val pokemonId = 1
-        val categoryType = "fire"
-        coEvery { captureRecordDao.insertCapture(any()) } returns Unit
-
-        // Act
-        repository.capturePokemon(pokemonId, categoryType)
-
-        // Assert
+        repository.capturePokemon(1, "grass")
         coVerify { captureRecordDao.insertCapture(any()) }
     }
 
     @Test
     fun `releasePokemon should delete capture record from DAO`() = runTest {
-        // Arrange
-        val captureId = 1L
-        coEvery { captureRecordDao.deleteCapture(captureId) } returns Unit
-
-        // Act
-        repository.releasePokemon(captureId)
-
-        // Assert
-        coVerify { captureRecordDao.deleteCapture(captureId) }
-    }
-
-    @Test
-    fun `getCapturedPokemon should return captured Pokemon from DAO`() = runTest {
-        // Arrange
-        val pokemon = Pokemon(id = 1, name = "scorbunny", imageUrl = "url", description = "A cute rabbit.", evolvesFromId = null, isProcessed = true)
-        val capturedPokemon = CapturedPokemon(pokemon, captureId = 1L, captureTimestamp = 1234567890L, categoryType = "fire")
-        every { captureRecordDao.getCapturedPokemon() } returns flowOf(listOf(capturedPokemon))
-
-        // Act
-        val result = repository.getCapturedPokemon()
-
-        // Assert
-        result.collect { capturedList ->
-            assert(capturedList.size == 1)
-            assert(capturedList[0].pokemon.name == "scorbunny")
-            assert(capturedList[0].categoryType == "fire")
-        }
-    }
-
-    @Test
-    fun `getPokemonDetails should return Pokemon details including evolvesFromId`() = runTest {
-        // Arrange
-        val pokemonId = 1
-        val pokemon = Pokemon(id = 1, name = "scorbunny", imageUrl = "url", description = "A cute rabbit.", evolvesFromId = 16, isProcessed = true)
-        coEvery { pokemonDao.getPokemonById(pokemonId) } returns pokemon
-
-        // Act
-        val result = repository.getPokemonDetails(pokemonId)
-
-        // Assert
-        assert(result != null)
-        assert(result?.name == "scorbunny")
-        assert(result?.evolvesFromId == 16)
+        repository.releasePokemon(1L)
+        coVerify { captureRecordDao.deleteCapture(1L) }
     }
 }

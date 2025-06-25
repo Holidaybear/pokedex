@@ -92,7 +92,7 @@ class PokemonRepository @Inject constructor(
                 val description = speciesResponse.flavorTextEntries
                     .firstOrNull { it.language.name == "en" }
                     ?.flavorText
-                    ?.replace("", " ") ?: ""
+                    ?.replace("\n", " ") ?: ""
 
                 val evolvesFromId = speciesResponse.evolvesFromSpecies?.url
                     ?.let { url -> url.split("/").lastOrNull { it.isNotBlank() }?.toIntOrNull() }
