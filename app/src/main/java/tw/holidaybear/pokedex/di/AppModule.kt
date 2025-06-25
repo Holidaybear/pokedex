@@ -2,7 +2,6 @@ package tw.holidaybear.pokedex.di
 
 import android.content.Context
 import androidx.room.Room
-import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,8 +52,4 @@ object AppModule {
 
     @Provides
     fun provideCaptureRecordDao(database: AppDatabase): CaptureRecordDao = database.captureRecordDao()
-
-    @Provides
-    @Singleton
-    fun provideWorkManager(@ApplicationContext context: Context): WorkManager = WorkManager.getInstance(context)
 }
