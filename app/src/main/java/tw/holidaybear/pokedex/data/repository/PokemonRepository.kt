@@ -60,14 +60,9 @@ class PokemonRepository @Inject constructor(
             val detailResponse = pokeApiService.getPokemonDetail(pokemonId)
             val imageUrl = detailResponse.sprites.other.officialArtwork.frontDefault
 
-            val speciesResponse = pokeApiService.getPokemonSpecies(pokemonId)
-            val description = speciesResponse.flavorTextEntries
-                .firstOrNull { it.language.name == "en" }
-                ?.flavorText
-                ?.replace("", " ") ?: ""
-
-            val evolvesFromId = speciesResponse . evolvesFromSpecies ?. url
-            ?.let { url -> url.split("/").lastOrNull { it.isNotBlank() }?.toIntOrNull() }
+            // Step 3: Remove species fetching from initial sync
+            // val speciesResponse = pokeApiService.getPokemonSpecies(pokemonId)
+            // ... (description and evolvesFromId logic removed)
 
             detailResponse.types.forEach { pokemonType ->
                 val typeName = pokemonType.type.name
@@ -81,10 +76,32 @@ class PokemonRepository @Inject constructor(
                 }
                 pokemonDao.insertPokemonType(PokemonType(pokemonId = pokemonId, typeId = typeId))
             }
-            pokemonDao.updatePokemonDetails(pokemonId, imageUrl, description, evolvesFromId)
+            // Only update with basic info and mark as processed
+            pokemonDao.updatePokemonDetails(pokemonId, imageUrl, null, null)
         } catch (e: Exception) {
-            // You might want to add more sophisticated error handling here
             e.printStackTrace()
+        }
+    }
+
+    suspend fun ensureSpeciesInfoIsLoaded(pokemonId: Int) {
+        val pokemon = pokemonDao.getPokemonById(pokemonId)
+        // Check if description is null, which implies species info hasn't been fetched
+        if (pokemon != null && pokemon.description == null) {
+            try {
+                val speciesResponse = pokeApiService.getPokemonSpecies(pokemonId)
+                val description = speciesResponse.flavorTextEntries
+                    .firstOrNull { it.language.name == "en" }
+                    ?.flavorText
+                    ?.replace("", " ") ?: ""
+
+                val evolvesFromId = speciesResponse.evolvesFromSpecies?.url
+                    ?.let { url -> url.split("/").lastOrNull { it.isNotBlank() }?.toIntOrNull() }
+
+                // We already have the image url, so we pass it again
+                pokemonDao.updatePokemonDetails(pokemonId, pokemon.imageUrl, description, evolvesFromId)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 

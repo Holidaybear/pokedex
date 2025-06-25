@@ -18,6 +18,6 @@ data class TypeWithCount(
 )
 
 data class PokemonAndType(
-    @Embedded val pokemon: Pokemon,
-    @Embedded val type: Type
+    @Embedded(prefix = "pokemon_") val pokemon: Pokemon,
+    @Embedded(prefix = "type_") val type: Type
 )

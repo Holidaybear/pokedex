@@ -27,6 +27,9 @@ class DetailViewModel @Inject constructor(
 
     fun loadPokemonDetails(pokemonId: Int) {
         viewModelScope.launch {
+            // Ensure species info is loaded before observing the details
+            pokemonRepository.ensureSpeciesInfoIsLoaded(pokemonId)
+
             pokemonRepository.getPokemonDetails(pokemonId)?.let { pokemon ->
                 _pokemon.value = pokemon
                 pokemon.evolvesFromId?.let { evolvesFromId ->

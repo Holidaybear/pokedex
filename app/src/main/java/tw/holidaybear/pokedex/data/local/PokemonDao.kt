@@ -22,11 +22,14 @@ interface PokemonDao {
     fun getTypesWithCount(): Flow<List<TypeWithCount>>
 
     @Transaction
-    @Query("SELECT * FROM pokemon " +
-            "INNER JOIN pokemon_type ON pokemon.id = pokemon_type.pokemonId " +
-            "INNER JOIN type ON pokemon_type.typeId = type.id " +
-            "WHERE pokemon.isProcessed = 1 " +
-            "ORDER BY type.name ASC, pokemon.id ASC")
+    @Query("SELECT p.id AS pokemon_id, p.name AS pokemon_name, p.imageUrl AS pokemon_imageUrl, " +
+            "p.description AS pokemon_description, p.evolvesFromId AS pokemon_evolvesFromId, p.isProcessed AS pokemon_isProcessed, " +
+            "t.id AS type_id, t.name AS type_name " +
+            "FROM pokemon p " +
+            "INNER JOIN pokemon_type pt ON p.id = pt.pokemonId " +
+            "INNER JOIN type t ON pt.typeId = t.id " +
+            "WHERE p.isProcessed = 1 " +
+            "ORDER BY t.name ASC, p.id ASC")
     fun getProcessedPokemonAndTheirTypes(): Flow<List<PokemonAndType>>
 
     @Query("SELECT p.* " +
