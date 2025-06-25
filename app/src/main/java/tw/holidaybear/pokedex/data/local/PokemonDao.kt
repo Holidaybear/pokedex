@@ -5,6 +5,8 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
+import androidx.room.Transaction
+import tw.holidaybear.pokedex.data.model.PokemonAndType
 import tw.holidaybear.pokedex.data.model.TypeWithCount
 
 @Dao
@@ -18,6 +20,14 @@ interface PokemonDao {
             "GROUP BY t.id " +
             "ORDER BY t.name ASC")
     fun getTypesWithCount(): Flow<List<TypeWithCount>>
+
+    @Transaction
+    @Query("SELECT * FROM pokemon " +
+            "INNER JOIN pokemon_type ON pokemon.id = pokemon_type.pokemonId " +
+            "INNER JOIN type ON pokemon_type.typeId = type.id " +
+            "WHERE pokemon.isProcessed = 1 " +
+            "ORDER BY type.name ASC, pokemon.id ASC")
+    fun getProcessedPokemonAndTheirTypes(): Flow<List<PokemonAndType>>
 
     @Query("SELECT p.* " +
             "FROM pokemon p " +

@@ -16,3 +16,8 @@ data class TypeWithCount(
     @Embedded val type: Type,
     val count: Int // Number of processed Pokemon in this type
 )
+
+data class PokemonAndType(
+    @Embedded val pokemon: Pokemon,
+    @Embedded val type: Type
+)

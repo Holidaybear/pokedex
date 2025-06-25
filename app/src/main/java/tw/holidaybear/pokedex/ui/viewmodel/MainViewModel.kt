@@ -6,8 +6,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.model.CapturedPokemon
@@ -23,39 +24,40 @@ class MainViewModel @Inject constructor(
     private val _capturedPokemon = MutableStateFlow<List<CapturedPokemon>>(emptyList())
     val capturedPokemon: StateFlow<List<CapturedPokemon>> = _capturedPokemon
 
-    private val _typesWithCount = MutableStateFlow<List<TypeWithCount>>(emptyList())
-    val typesWithCount: StateFlow<List<TypeWithCount>> = _typesWithCount
-
-    private val _pokemonByType = MutableStateFlow<Map<Int, List<Pokemon>>>(emptyMap())
-    val pokemonByType: StateFlow<Map<Int, List<Pokemon>>> = _pokemonByType
-
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
+
+    private val processedPokemonAndTypes = pokemonRepository.getProcessedPokemonAndTheirTypes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val typesWithCount: StateFlow<List<TypeWithCount>> = processedPokemonAndTypes
+        .combine(MutableStateFlow(Unit)) { pokemonAndTypes, _ ->
+            pokemonAndTypes
+                .groupBy { it.type }
+                .map { (type, pokemonList) ->
+                    TypeWithCount(type = type, count = pokemonList.size)
+                }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val pokemonByType: StateFlow<Map<Int, List<Pokemon>>> = processedPokemonAndTypes
+        .combine(MutableStateFlow(Unit)) { pokemonAndTypes, _ ->
+            pokemonAndTypes
+                .groupBy { it.type.id }
+                .mapValues { entry -> entry.value.map { it.pokemon } }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
 
     init {
         fetchAndSync()
         observeCapturedPokemon()
-        observeTypesAndPokemon()
     }
 
     private fun observeCapturedPokemon() {
         viewModelScope.launch {
             pokemonRepository.getCapturedPokemon().collectLatest { capturedList ->
                 _capturedPokemon.value = capturedList
-            }
-        }
-    }
-
-    private fun observeTypesAndPokemon() {
-        viewModelScope.launch {
-            pokemonRepository.getTypesWithCount().collectLatest { types ->
-                val updatedPokemonByType = mutableMapOf<Int, List<Pokemon>>()
-                types.forEach { typeWithCount ->
-                    val pokemonList = pokemonRepository.getPokemonByType(typeWithCount.type.id).firstOrNull() ?: emptyList()
-                    updatedPokemonByType[typeWithCount.type.id] = pokemonList
-                }
-                _typesWithCount.value = types
-                _pokemonByType.value = updatedPokemonByType
             }
         }
     }

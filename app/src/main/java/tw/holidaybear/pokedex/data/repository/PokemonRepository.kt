@@ -12,6 +12,7 @@ import tw.holidaybear.pokedex.data.local.Type
 import tw.holidaybear.pokedex.data.model.CapturedPokemon
 import tw.holidaybear.pokedex.data.model.TypeWithCount
 import tw.holidaybear.pokedex.data.remote.PokeApiService
+import tw.holidaybear.pokedex.data.model.PokemonAndType
 import javax.inject.Inject
 
 class PokemonRepository @Inject constructor(
@@ -19,6 +20,10 @@ class PokemonRepository @Inject constructor(
     private val pokemonDao: PokemonDao,
     private val captureRecordDao: CaptureRecordDao
 ) {
+
+    fun getProcessedPokemonAndTheirTypes(): Flow<List<PokemonAndType>> {
+        return pokemonDao.getProcessedPokemonAndTheirTypes()
+    }
 
     suspend fun fetchAndStorePokemonList() {
         val processedCount = pokemonDao.getProcessedPokemonCount()
