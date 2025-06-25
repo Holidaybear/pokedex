@@ -110,10 +110,6 @@ class PokemonRepository @Inject constructor(
         return pokemonDao.getTypesWithCount()
     }
 
-    fun getPokemonByType(typeId: Int): Flow<List<Pokemon>> {
-        return pokemonDao.getPokemonByType(typeId)
-    }
-
     fun getCapturedPokemon(): Flow<List<CapturedPokemon>> {
         return captureRecordDao.getCapturedPokemon()
     }

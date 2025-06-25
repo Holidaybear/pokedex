@@ -32,13 +32,6 @@ interface PokemonDao {
             "ORDER BY t.name ASC, p.id ASC")
     fun getProcessedPokemonAndTheirTypes(): Flow<List<PokemonAndType>>
 
-    @Query("SELECT p.* " +
-            "FROM pokemon p " +
-            "INNER JOIN pokemon_type pt ON p.id = pt.pokemonId " +
-            "WHERE pt.typeId = :typeId AND p.isProcessed = 1 " +
-            "ORDER BY p.id ASC")
-    fun getPokemonByType(typeId: Int): Flow<List<Pokemon>>
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPokemon(pokemon: Pokemon)
 
