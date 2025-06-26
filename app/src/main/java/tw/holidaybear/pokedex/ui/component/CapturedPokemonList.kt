@@ -18,7 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.model.CapturedPokemon
+import tw.holidaybear.pokedex.ui.theme.PokedexTheme
 
 @Composable
 fun CapturedPokemonList(
@@ -77,6 +80,26 @@ fun CapturedPokemonList(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CapturedPokemonListPreview() {
+    val previewPokemon1 = Pokemon(id = 25, name = "pikachu", imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png", isProcessed = true)
+    val previewPokemon2 = Pokemon(id = 6, name = "charizard", imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png", isProcessed = true)
+    val previewCapturedList = listOf(
+        CapturedPokemon(previewPokemon1, 1L, System.currentTimeMillis(), "electric"),
+        CapturedPokemon(previewPokemon2, 2L, System.currentTimeMillis(), "fire"),
+        CapturedPokemon(previewPokemon2, 3L, System.currentTimeMillis(), "flying")
+    )
+    PokedexTheme {
+        CapturedPokemonList(
+            capturedPokemon = previewCapturedList,
+            capturedCount = previewCapturedList.size,
+            onRelease = {},
+            onCardClick = {}
         )
     }
 }

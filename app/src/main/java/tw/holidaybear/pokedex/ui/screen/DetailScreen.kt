@@ -25,15 +25,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import tw.holidaybear.pokedex.R
+import tw.holidaybear.pokedex.data.local.Pokemon
+import tw.holidaybear.pokedex.data.local.Type
 import tw.holidaybear.pokedex.ui.navigation.Screen
 import tw.holidaybear.pokedex.ui.theme.Gray300
+import tw.holidaybear.pokedex.ui.theme.PokedexTheme
 import tw.holidaybear.pokedex.ui.viewmodel.DetailViewModel
 
 @Composable
@@ -48,9 +53,20 @@ fun DetailScreen(
 
     if (pokemon == null) {
         viewModel.loadPokemonDetails(pokemonId)
+        // You can show a loading indicator here
         return
     }
 
+    DetailScreenContent(navController, pokemon, types, prevPokemon)
+}
+
+@Composable
+fun DetailScreenContent(
+    navController: NavController,
+    pokemon: Pokemon,
+    types: List<Type>,
+    prevPokemon: Pokemon?
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -170,5 +186,30 @@ fun DetailScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DetailScreenPreview() {
+    val navController = rememberNavController()
+    val pokemon = Pokemon(
+        id = 6,
+        name = "charizard",
+        imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png",
+        description = "Charizard flies around the sky in search of powerful opponents. It breathes fire of such great heat that it melts anything. However, it never turns its fiery breath on any opponent weaker than itself.",
+        evolvesFromId = 5,
+        isProcessed = true
+    )
+    val types = listOf(Type(10, "fire"), Type(3, "flying"))
+    val prevPokemon = Pokemon(
+        id = 5,
+        name = "charmeleon",
+        imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/5.png",
+        isProcessed = true
+    )
+
+    PokedexTheme {
+        DetailScreenContent(navController, pokemon, types, prevPokemon)
     }
 }

@@ -14,8 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.local.Type
+import tw.holidaybear.pokedex.ui.theme.PokedexTheme
 
 @Composable
 fun TypeListItem(
@@ -68,5 +70,25 @@ fun TypeListItem(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TypeListItemPreview() {
+    val previewType = Type(id = 4, name = "fire")
+    val previewPokemonList = listOf(
+        Pokemon(id = 4, name = "charmander", imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png", isProcessed = true),
+        Pokemon(id = 5, name = "charmeleon", imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/5.png", isProcessed = true),
+        Pokemon(id = 6, name = "charizard", imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png", isProcessed = true)
+    )
+    PokedexTheme {
+        TypeListItem(
+            type = previewType,
+            count = previewPokemonList.size,
+            pokemonList = previewPokemonList,
+            onCapture = {},
+            onCardClick = {}
+        )
     }
 }

@@ -16,11 +16,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import tw.holidaybear.pokedex.R
+import tw.holidaybear.pokedex.data.local.Pokemon
 import tw.holidaybear.pokedex.data.model.CapturedPokemon
+import tw.holidaybear.pokedex.ui.theme.PokedexTheme
 
 @Composable
 fun CapturedPokemonCard(
@@ -63,6 +66,30 @@ fun CapturedPokemonCard(
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+@Preview
+@Composable
+fun CapturedPokemonCardPreview() {
+    val previewPokemon = Pokemon(
+        id = 25,
+        name = "pikachu",
+        imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
+        isProcessed = true
+    )
+    val previewCapturedPokemon = CapturedPokemon(
+        pokemon = previewPokemon,
+        captureId = 1L,
+        captureTimestamp = System.currentTimeMillis(),
+        categoryType = "electric"
+    )
+    PokedexTheme {
+        CapturedPokemonCard(
+            capturedPokemon = previewCapturedPokemon,
+            onRelease = {},
+            onCardClick = {}
         )
     }
 }

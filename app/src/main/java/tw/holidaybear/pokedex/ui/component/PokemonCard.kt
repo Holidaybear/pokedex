@@ -20,7 +20,9 @@ import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import tw.holidaybear.pokedex.R
+import androidx.compose.ui.tooling.preview.Preview
 import tw.holidaybear.pokedex.data.local.Pokemon
+import tw.holidaybear.pokedex.ui.theme.PokedexTheme
 
 @Composable
 fun PokemonCard(
@@ -63,6 +65,24 @@ fun PokemonCard(
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PokemonCardPreview() {
+    val previewPokemon = Pokemon(
+        id = 1,
+        name = "bulbasaur",
+        imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png",
+        isProcessed = true
+    )
+    PokedexTheme {
+        PokemonCard(
+            pokemon = previewPokemon,
+            onCapture = {},
+            onCardClick = {}
         )
     }
 }
